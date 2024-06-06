@@ -1,0 +1,21 @@
+name: Deploy Website
+
+on: workflow_dispatch
+
+jobs:
+  build:
+    env:
+      PORT: "8091"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Deploy website
+        run: |
+          pwd
+          sshpass -p 'password' ssh -o StrictHostKeyChecking=no ec2-user@34.226.190.178 "rm -rf /home/ec2-user/${{env.PORT}}"
+          sshpass -p "password" scp -o StrictHostKeyChecking=no -r /home/runner/work/Nokia-CI-CD/Nokia-CI-CD ec2-user@34.226.190.178:/home/ec2-user/${{env.PORT}}
+          sshpass -p 'password' ssh -o StrictHostKeyChecking=no ec2-user@34.226.190.178 "sudo docker rm nginx-${{env.PORT}} --force || true"
+          sshpass -p 'password' ssh -o StrictHostKeyChecking=no ec2-user@34.226.190.178 "sudo docker run -d -v /home/ec2-user/${{env.PORT}}:/usr/share/nginx/html:ro --name nginx-${{env.PORT}} -p ${{env.PORT}}:80 nginx"
